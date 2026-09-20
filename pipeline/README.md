@@ -4,34 +4,46 @@ Modular CT processing pipeline.
 
 ## Input Adapters
 
-- `dicom/` – discovers series, validates slices, converts to HU, produces `CanonicalVolume`
-- `nifti/` – loads TotalSegmentator-style subjects into the same `CanonicalVolume`
+- `dicom/` – series discovery, validation with severity levels, HU conversion → `CanonicalVolume`
+- `nifti/` – TotalSegmentator-style subjects → same `CanonicalVolume`
 
-All subsequent stages operate only on `CanonicalVolume`.
+Downstream stages never depend on the original format.
+
+## Severity Levels
+
+| Level   | Meaning                                      |
+|---------|----------------------------------------------|
+| ERROR   | Pipeline cannot safely continue              |
+| WARNING | Pipeline can continue; issue is recorded     |
+| INFO    | Normal decision or successful check          |
 
 ## CLI
 
 ```bash
 python -m pipeline.cli discover <root>
 python -m pipeline.cli validate <path>
-python -m pipeline.cli build <path> [--output assets] [--config config.json]
+python -m pipeline.cli build <path> [--output assets]
 python -m pipeline.cli verify <assets_dir>
 ```
 
-## Tests
+## Running Tests
 
 ```bash
 cd pipeline
-pytest tests/
+pip install -r requirements.txt
+pip install pytest
+pytest tests/ -v
 ```
 
-## Current Coverage
+## Test Focus
 
-- Canonical volume model
-- DICOM series loading + basic spatial validation
-- NIfTI loading + orientation
-- Window / crop / mesh generation
-- End-to-end asset package + verification
-- Initial unit tests for hard cases (duplicates, spacing, missing assets, etc.)
+- Failure behaviour (duplicates, missing geometry, NaNs, empty masks)
+- Severity classification (ERROR vs WARNING)
+- CanonicalVolume invariants
+- Asset package and manifest integrity
+- Mesh edge cases (empty label, tiny components)
+- Both DICOM-style synthetic data and NIfTI paths
 
-Next: expand the test suite with more malformed DICOM fixtures and orientation edge cases.
+## Status
+
+Core happy path and many failure cases are covered. Additional real-world DICOM fixtures can be added later without changing the adapter boundary.
