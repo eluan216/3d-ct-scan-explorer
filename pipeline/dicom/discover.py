@@ -4,17 +4,9 @@ Discover DICOM series or NIfTI subjects under a root directory.
 
 from pathlib import Path
 from typing import List, Dict, Any
-import json
 
 
 def discover(root: Path) -> List[Dict[str, Any]]:
-    """
-    Return a list of candidate studies/subjects found under root.
-
-    Currently supports:
-    - Directories containing ct.nii.gz + segmentations/ (TotalSegmentator style)
-    - Future: full DICOM series discovery
-    """
     root = Path(root)
     results = []
 
@@ -28,17 +20,33 @@ def discover(root: Path) -> List[Dict[str, Any]]:
         # NIfTI / TotalSegmentator layout
         ct = item / "ct.nii.gz"
         seg = item / "segmentations"
-        if ct.exists() and seg.is_dir():
+        if ct.exists():
             results.append({
                 "type": "nifti_subject",
                 "path": str(item),
                 "has_ct": True,
-                "has_segmentations": True,
-                "segmentation_count": len(list(seg.glob("*.nii.gz"))),
+                "has_segmentations": seg.is_dir(),
             })
             continue
 
-        # Placeholder for DICOM series detection
-        # (will look for .dcm files and group by SeriesInstanceUID)
+        # DICOM heuristic: look for .dcm or files that pydicom can read
+        dcm_files = list(item.glob("*.dcm")) + list(item.glob("*.DCM"))
+        if dcm_files:
+            results.append({
+                "type": "dicom_directory",
+                "path": str(item),
+                "approx_file_count": len(dcm_files),
+            })
+            continue
+
+        # also accept directories that contain many files without extension
+        # (common in some DICOM exports)
+        files = [p for p in item.iterdir() if p.is_file()]
+        if len(files) > 10:
+            results.append({
+                "type": "possible_dicom_directory",
+                "path": str(item),
+                "file_count": len(files),
+            })
 
     return results
