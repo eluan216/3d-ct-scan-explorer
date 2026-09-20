@@ -4,32 +4,24 @@ Modular processing pipeline for the 3D CT Scan Explorer.
 
 ## Design Goals
 
-- Full lifecycle coverage (discovery → validation → orientation → preprocessing → mesh → assets)
+- Full lifecycle coverage
 - Configuration-driven and reproducible
+- Explicit failure handling
 - Clear separation of concerns
-- Failures are explicit rather than silent
-- Predictable asset contract for the frontend
+- Stable asset contract for the frontend
 
-## Directory Layout
+## CLI Stages
 
+```bash
+python -m pipeline.cli discover <root>
+python -m pipeline.cli validate <subject>
+python -m pipeline.cli build <subject> [--output assets] [--config config.json]
+python -m pipeline.cli verify <assets_dir>
 ```
-pipeline/
-├── cli.py
-├── config.py
-├── dicom/
-├── preprocessing/
-├── segmentation/
-├── mesh/
-├── slices/
-├── validation/
-├── models/
-├── tests/
-└── requirements.txt
-```
+
+Additional stage commands (preprocess / segment / mesh / slices) exist as placeholders and will be fully wired later. The primary reproducible entry point is `build`.
 
 ## Asset Contract
-
-The pipeline produces:
 
 ```
 assets/
@@ -38,19 +30,22 @@ assets/
 │   └── metadata.json
 ├── meshes/
 │   └── <label>.glb
-├── slices/          # optional pre-rendered slices
-└── manifest.json
+├── manifest.json
+└── pipeline_config.json
 ```
-
-The frontend only needs to read `manifest.json` and the referenced files.
 
 ## Current Status
 
-- Configuration system
-- CLI skeleton
-- DICOM/NIfTI discovery and basic validation
-- Orientation helpers
-- Volume and asset validation stubs
-- Metadata models
-
-Full end-to-end run wiring and mesh generation modules are next.
+- [x] Config system
+- [x] CLI with explicit stages
+- [x] Discovery & validation
+- [x] Orientation, window, crop
+- [x] Segmentation interface + threshold backend
+- [x] Mesh generation, cleanup, export
+- [x] End-to-end `build` command
+- [x] Asset verification
+- [ ] Full DICOM series support
+- [ ] Advanced resampling options
+- [ ] Pre-rendered slice images
+- [ ] Comprehensive test suite
+- [ ] Model-based segmentation backends

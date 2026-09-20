@@ -17,14 +17,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    # discovery / validation
     p = sub.add_parser("discover", help="Discover subjects under a root directory")
     p.add_argument("input", type=Path)
 
     p = sub.add_parser("validate", help="Validate a single subject")
     p.add_argument("path", type=Path)
 
-    # processing stages
     p = sub.add_parser("preprocess", help="Run orientation + window + optional crop/resample")
     p.add_argument("subject", type=Path)
     p.add_argument("--config", type=Path, default=None)
@@ -44,7 +42,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--config", type=Path, default=None)
     p.add_argument("--output", type=Path, default=None)
 
-    # full build + verify
     p = sub.add_parser("build", help="Run complete pipeline and write assets/")
     p.add_argument("subject", type=Path)
     p.add_argument("--config", type=Path, default=None)
@@ -74,19 +71,19 @@ def main(argv=None):
         return 0 if ok else 1
 
     if args.command == "preprocess":
-        print("preprocess stage – implementation in progress")
+        print("preprocess stage – use 'build' for the full path for now")
         return 0
 
     if args.command == "segment":
-        print("segment stage – implementation in progress")
+        print("segment stage – use 'build' for the full path for now")
         return 0
 
     if args.command == "mesh":
-        print("mesh stage – implementation in progress")
+        print("mesh stage – use 'build' for the full path for now")
         return 0
 
     if args.command == "slices":
-        print("slices stage – implementation in progress")
+        print("slices stage – use 'build' for the full path for now")
         return 0
 
     if args.command == "build":
@@ -95,11 +92,15 @@ def main(argv=None):
             cfg = PipelineConfig.load(args.config)
         if args.output:
             cfg.output_path = args.output
-        print(f"build stage – pipeline version {cfg.pipeline_version}")
-        print(f"subject : {args.subject}")
-        print(f"output  : {cfg.output_path}")
-        print("full end-to-end wiring still under construction")
-        return 0
+
+        from build import build
+        try:
+            out = build(args.subject, cfg)
+            print(f"build complete → {out}")
+            return 0
+        except Exception as e:
+            print(f"build failed: {e}")
+            return 1
 
     if args.command == "verify":
         from validation.assets import verify_assets
