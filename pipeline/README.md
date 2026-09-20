@@ -1,51 +1,37 @@
 # Pipeline
 
-Modular processing pipeline for the 3D CT Scan Explorer.
+Modular CT processing pipeline.
 
-## Design Goals
+## Input Adapters
 
-- Full lifecycle coverage
-- Configuration-driven and reproducible
-- Explicit failure handling
-- Clear separation of concerns
-- Stable asset contract for the frontend
+- `dicom/` – discovers series, validates slices, converts to HU, produces `CanonicalVolume`
+- `nifti/` – loads TotalSegmentator-style subjects into the same `CanonicalVolume`
 
-## CLI Stages
+All subsequent stages operate only on `CanonicalVolume`.
+
+## CLI
 
 ```bash
 python -m pipeline.cli discover <root>
-python -m pipeline.cli validate <subject>
-python -m pipeline.cli build <subject> [--output assets] [--config config.json]
+python -m pipeline.cli validate <path>
+python -m pipeline.cli build <path> [--output assets] [--config config.json]
 python -m pipeline.cli verify <assets_dir>
 ```
 
-Additional stage commands (preprocess / segment / mesh / slices) exist as placeholders and will be fully wired later. The primary reproducible entry point is `build`.
+## Tests
 
-## Asset Contract
-
-```
-assets/
-├── volume/
-│   ├── volume.bin
-│   └── metadata.json
-├── meshes/
-│   └── <label>.glb
-├── manifest.json
-└── pipeline_config.json
+```bash
+cd pipeline
+pytest tests/
 ```
 
-## Current Status
+## Current Coverage
 
-- [x] Config system
-- [x] CLI with explicit stages
-- [x] Discovery & validation
-- [x] Orientation, window, crop
-- [x] Segmentation interface + threshold backend
-- [x] Mesh generation, cleanup, export
-- [x] End-to-end `build` command
-- [x] Asset verification
-- [ ] Full DICOM series support
-- [ ] Advanced resampling options
-- [ ] Pre-rendered slice images
-- [ ] Comprehensive test suite
-- [ ] Model-based segmentation backends
+- Canonical volume model
+- DICOM series loading + basic spatial validation
+- NIfTI loading + orientation
+- Window / crop / mesh generation
+- End-to-end asset package + verification
+- Initial unit tests for hard cases (duplicates, spacing, missing assets, etc.)
+
+Next: expand the test suite with more malformed DICOM fixtures and orientation edge cases.
