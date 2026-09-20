@@ -39,7 +39,7 @@ def mesh_from_label(
     mesh.fix_normals()
 
     if len(mesh.faces) > max_faces:
-        mesh = mesh.simplify_quadratic_decimation(max_faces)
+        mesh = mesh.simplify_quadric_decimation(face_count=max_faces)
 
     return mesh
 
