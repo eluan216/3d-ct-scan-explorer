@@ -17,42 +17,36 @@ The frontend is a pure consumer of the frozen asset contract.
 ## Status
 
 ### Pipeline
-| Area | Status |
-|------|--------|
-| CanonicalVolume + adapters (DICOM / NIfTI) | Done |
-| Orientation, series selection, severity levels | Done |
-| Mesh generation + verification | Done |
-| Golden fixture + failure-focused tests | Done |
-| Frozen contract (`pipeline/docs/CONTRACT.md`) | Done |
+- CanonicalVolume + DICOM / NIfTI adapters
+- Orientation, series selection, severity-level validation
+- Mesh generation, asset package, verification
+- Failure-focused tests + golden fixture
+- Frozen contract: `pipeline/docs/CONTRACT.md`
 
-### Frontend (first milestone)
-| Area | Status |
-|------|--------|
-| Next.js + TypeScript + Tailwind foundation | Done |
-| Typed manifest + asset loader | Done |
-| 3D GLB viewer (R3F) | Done |
-| Structure list, visibility, selection | Done |
-| Orientation indicator | Done |
-| Loading / error states | Done |
-| Synchronized slice views | Next |
-| Window/level + volume controls | Next |
+### Frontend
+- 3D GLB viewer (React Three Fiber)
+- Synchronized axial / coronal / sagittal slices + crosshair
+- Slice sliders, mesh opacity, structure visibility, reset
+- Study metadata panel (no PHI)
+- WebGL fallback, mesh error boundary, mobile layout
+- Loading and missing-asset error states
 
 ## Quick Start
 
 ```bash
-# 1. Pipeline (once you have a subject)
+# Pipeline
 cd pipeline
 pip install -r requirements.txt
 python -m pipeline.cli build /path/to/subject --output ../assets
 python -m pipeline.cli verify ../assets
 
-# 2. Frontend
+# Frontend
 cd ../web
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000. The app serves files from the sibling `assets/` directory.
+Open http://localhost:3000
 
 ## Contract
 
