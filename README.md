@@ -18,21 +18,27 @@ NIfTI subject   ──► NiftiLoader ────────► CanonicalVolum
                                      verify
 ```
 
+Input adapters are interchangeable. Downstream stages only see `CanonicalVolume`.
+
 ## Pipeline Status
 
-| Area                              | Status   |
-|-----------------------------------|----------|
-| CanonicalVolume abstraction       | Done     |
-| DICOM adapter + severity levels   | Done     |
-| NIfTI adapter                     | Done     |
-| Slice integrity checks            | Done     |
-| End-to-end build + verify         | Done     |
-| Structured ERROR/WARNING/INFO     | Done     |
-| Invariant tests                   | Done     |
-| Failure-focused test suite        | Done     |
-| Frontend                          | Not started |
+| Area                                 | Status |
+|--------------------------------------|--------|
+| CanonicalVolume + invariants         | Done   |
+| DICOM adapter (orientation, series)  | Done   |
+| Reversed-order slice handling        | Done   |
+| Multi-series selection rules         | Done   |
+| Severity levels (ERROR/WARNING/INFO) | Done   |
+| Geometry & segmentation edge cases   | Done   |
+| Golden fixture regression            | Done   |
+| Frozen contract documentation        | Done   |
+| Frontend                             | Not started |
 
-## Running the Pipeline
+## Contract
+
+See [`pipeline/docs/CONTRACT.md`](pipeline/docs/CONTRACT.md) for the stable interfaces. Frontend work must consume only the published asset manifest and must not change pipeline contracts without a version bump.
+
+## CLI
 
 ```bash
 cd pipeline
@@ -52,9 +58,17 @@ pip install pytest
 pytest tests/ -v
 ```
 
-The suite emphasises failure behaviour: duplicate slices, missing geometry, non-contiguous InstanceNumbers, NaNs, empty masks, incomplete asset packages, and manifest inconsistencies.
+Coverage includes:
 
-## Asset Contract
+- oblique / missing / inconsistent orientation
+- reversed slice ordering
+- multiple CT series selection & ties
+- single-slice and spacing-variation geometry
+- empty / single-voxel / disconnected segmentation
+- golden end-to-end fixture → verified assets
+- both DICOM-style synthetic data and NIfTI paths
+
+## Asset Package
 
 ```
 assets/
