@@ -1,0 +1,28 @@
+# Data (large, do not commit)
+data/
+*.nii.gz
+*.zip
+
+# Python
+pipeline/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Node / Next.js
+web/node_modules/
+web/.next/
+web/out/
+web/.env*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs and temp
+*.log
+tmp/
+.temp/
