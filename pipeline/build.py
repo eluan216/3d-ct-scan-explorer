@@ -1,74 +1,42 @@
 """
 End-to-end asset builder.
 
-Given a subject directory and a PipelineConfig, produce the complete
-assets/ tree and a manifest.json that the frontend can consume.
+Accepts either a NIfTI subject directory or a DICOM directory.
+Both are converted to a CanonicalVolume before the rest of the
+pipeline runs, keeping later stages input-agnostic.
 """
 
 from pathlib import Path
 from typing import Optional
-import json
 import numpy as np
-import nibabel as nib
 
 from config import PipelineConfig
-from preprocessing.orientation import to_canonical, verify as verify_orientation
+from models.volume import CanonicalVolume
+from models.metadata import VolumeMetadata, Manifest
 from preprocessing.window import apply_window
 from preprocessing.crop import crop_to_labels
 from segmentation.threshold import ThresholdSegmentation
 from mesh.generate import generate_all
 from mesh.cleanup import basic_cleanup, remove_small_components
 from mesh.export import export_glb
-from models.metadata import VolumeMetadata, Manifest
 from validation.volume import check_finite, check_non_empty, check_spacing
 
 
-def load_nifti_subject(subject_dir: Path):
-    ct_path = subject_dir / "ct.nii.gz"
-    if not ct_path.exists():
-        raise FileNotFoundError(f"ct.nii.gz not found in {subject_dir}")
-
-    img = nib.load(str(ct_path))
-    img = to_canonical(img)
-    data = img.get_fdata()
-    spacing = tuple(float(x) for x in img.header.get_zooms()[:3])
-    return data, spacing, img
+def load_canonical(path: Path) -> CanonicalVolume:
+    path = Path(path)
+    if (path / "ct.nii.gz").exists():
+        from nifti.loader import load_nifti_subject
+        return load_nifti_subject(path)
+    # assume DICOM directory
+    from dicom.loader import load_dicom_directory
+    return load_dicom_directory(path)
 
 
-def load_existing_labels(subject_dir: Path, shape) -> Optional[np.ndarray]:
-    """Load TotalSegmentator-style masks if present."""
-    seg_dir = subject_dir / "segmentations"
-    if not seg_dir.is_dir():
-        return None
-
-    label_map = {
-        "liver": 1,
-        "spleen": 2,
-        "stomach": 3,
-        "kidney_right": 4,
-        "kidney_left": 5,
-        "aorta": 6,
-        "inferior_vena_cava": 7,
-    }
-    labels = np.zeros(shape, dtype=np.uint8)
-
-    for name, lid in label_map.items():
-        p = seg_dir / f"{name}.nii.gz"
-        if p.exists():
-            m = nib.load(str(p))
-            m = to_canonical(m)
-            mask = m.get_fdata() > 0
-            labels[mask] = lid
-
-    # spine = union of vertebrae_*
-    spine = np.zeros(shape, dtype=bool)
-    for p in seg_dir.glob("vertebrae_*.nii.gz"):
-        m = nib.load(str(p))
-        m = to_canonical(m)
-        spine |= m.get_fdata() > 0
-    labels[spine] = 8
-
-    return labels
+def load_labels_if_available(path: Path, shape) -> Optional[np.ndarray]:
+    if (path / "segmentations").is_dir():
+        from nifti.loader import load_existing_labels
+        return load_existing_labels(path, shape)
+    return None
 
 
 def build(subject_dir: Path, cfg: PipelineConfig) -> Path:
@@ -78,49 +46,48 @@ def build(subject_dir: Path, cfg: PipelineConfig) -> Path:
     (out / "volume").mkdir(exist_ok=True)
     (out / "meshes").mkdir(exist_ok=True)
 
-    # 1. Load + orient
-    volume, spacing, img = load_nifti_subject(subject_dir)
-    ok, msg = verify_orientation(img)
-    if cfg.require_orientation_check and not ok:
-        raise RuntimeError(msg)
+    # 1. Load through the appropriate adapter
+    vol = load_canonical(subject_dir)
 
-    # 2. Basic volume checks
-    for check in (check_finite, check_non_empty):
-        ok, msg = check(volume)
-        if not ok:
-            raise RuntimeError(msg)
-    ok, msg = check_spacing(spacing)
+    # 2. Volume integrity checks
+    if not vol.is_finite():
+        raise RuntimeError("volume contains NaN or Inf")
+    ok, msg = check_non_empty(vol.data)
+    if not ok:
+        raise RuntimeError(msg)
+    ok, msg = check_spacing(vol.spacing_mm)
     if not ok:
         raise RuntimeError(msg)
 
-    # 3. Labels
-    existing = load_existing_labels(subject_dir, volume.shape)
+    # 3. Labels (only available for NIfTI/TotalSegmentator subjects for now)
+    existing = load_labels_if_available(subject_dir, vol.shape)
     seg = ThresholdSegmentation()
     meta = {"existing_labels": existing} if existing is not None else {}
-    labels = seg.run(volume, spacing, meta)
+    labels = seg.run(vol.data, vol.spacing_mm, meta)
     label_map = seg.label_map()
 
     # 4. Optional crop
-    offset = np.array([0, 0, 0])
+    offset = np.array([0, 0, 0], dtype=int)
+    data = vol.data
+    spacing = vol.spacing_mm
     if cfg.crop.enabled and existing is not None:
-        volume, labels, offset = crop_to_labels(
-            volume, labels, spacing, cfg.crop.margin_mm
+        data, labels, offset = crop_to_labels(
+            data, labels, spacing, cfg.crop.margin_mm
         )
 
-    # 5. Window
-    volume_w = apply_window(volume, cfg.window.level, cfg.window.width)
+    # 5. Window to uint8 for web delivery
+    data_w = apply_window(data, cfg.window.level, cfg.window.width)
 
     # 6. Write volume assets
-    vol_path = out / "volume" / "volume.bin"
-    volume_w.tofile(vol_path)
+    data_w.tofile(out / "volume" / "volume.bin")
 
-    center_mm = (np.array(volume_w.shape) * np.array(spacing)) / 2.0
+    center_mm = (np.array(data_w.shape) * np.array(spacing)) / 2.0
     vol_meta = VolumeMetadata(
-        shape=list(volume_w.shape),
+        shape=list(data_w.shape),
         spacing_mm=list(spacing),
         origin_mm=list(offset.astype(float)),
-        orientation="RAS",
-        intensity_range=[float(volume_w.min()), float(volume_w.max())],
+        orientation=vol.orientation,
+        intensity_range=[float(data_w.min()), float(data_w.max())],
         window_level=cfg.window.level,
         window_width=cfg.window.width,
     )
@@ -147,8 +114,6 @@ def build(subject_dir: Path, cfg: PipelineConfig) -> Path:
         labels={name: {"id": lid} for lid, name in label_map.items()},
     )
     manifest.save(out / "manifest.json")
-
-    # 9. Save config used for this run
     cfg.save(out / "pipeline_config.json")
 
     return out
