@@ -6,47 +6,53 @@ This is a learning and portfolio project only. It is not a medical device and mu
 
 ## Architecture
 
-Input adapters produce a common intermediate representation:
-
 ```
 DICOM directory ──► DicomSeriesLoader ──┐
                                         ▼
 NIfTI subject   ──► NiftiLoader ────────► CanonicalVolume
                                         ▼
-                               Preprocessing → Segmentation → Mesh / Slices
+                               Preprocessing → Segmentation → Mesh
                                         ▼
                                    assets/ + manifest.json
+                                        ▼
+                                     verify
 ```
-
-Later stages never need to know whether the source was DICOM or NIfTI.
 
 ## Pipeline Status
 
-| Area                         | Status      |
-|------------------------------|-------------|
-| CanonicalVolume abstraction  | Done        |
-| NIfTI adapter                | Done        |
-| DICOM series discovery       | Done        |
-| DICOM → HU volume            | Done        |
-| Slice ordering / validation  | Done        |
-| Missing / duplicate detection| Done        |
-| End-to-end `build`           | Done        |
-| Asset verification           | Done        |
-| Unit tests (core paths)      | In progress |
-| Full DICOM edge-case suite   | In progress |
-| Frontend                     | Not started |
+| Area                              | Status   |
+|-----------------------------------|----------|
+| CanonicalVolume abstraction       | Done     |
+| DICOM adapter + severity levels   | Done     |
+| NIfTI adapter                     | Done     |
+| Slice integrity checks            | Done     |
+| End-to-end build + verify         | Done     |
+| Structured ERROR/WARNING/INFO     | Done     |
+| Invariant tests                   | Done     |
+| Failure-focused test suite        | Done     |
+| Frontend                          | Not started |
 
-## CLI
+## Running the Pipeline
 
 ```bash
 cd pipeline
 pip install -r requirements.txt
 
 python -m pipeline.cli discover <root>
-python -m pipeline.cli validate <study-or-subject>
-python -m pipeline.cli build <study-or-subject> --output ../assets
+python -m pipeline.cli validate <study>
+python -m pipeline.cli build <study> --output ../assets
 python -m pipeline.cli verify ../assets
 ```
+
+## Tests
+
+```bash
+cd pipeline
+pip install pytest
+pytest tests/ -v
+```
+
+The suite emphasises failure behaviour: duplicate slices, missing geometry, non-contiguous InstanceNumbers, NaNs, empty masks, incomplete asset packages, and manifest inconsistencies.
 
 ## Asset Contract
 
@@ -64,7 +70,7 @@ assets/
 ## License & Data
 
 Code will be MIT.  
-When using public data, full attribution will be included (e.g. TotalSegmentator, CC BY 4.0).
+Public datasets will be fully attributed (e.g. TotalSegmentator, CC BY 4.0).
 
 ---
 eluan216
