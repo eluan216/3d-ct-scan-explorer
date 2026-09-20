@@ -6,6 +6,7 @@ import { Manifest } from '@/types/manifest';
 import { MeshViewer } from './MeshViewer';
 import { StructureList } from './StructureList';
 import { SlicePanel } from './SlicePanel';
+import { Controls } from './Controls';
 
 export function ViewerShell() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
@@ -67,7 +68,7 @@ export function ViewerShell() {
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
       {/* sidebar */}
-      <aside className="w-full shrink-0 border-b border-surface-border md:w-52 md:border-b-0 md:border-r">
+      <aside className="flex w-full shrink-0 flex-col border-b border-surface-border md:w-56 md:border-b-0 md:border-r">
         <div className="border-b border-surface-border px-3 py-2">
           <p className="text-xs text-accent-muted">Subject</p>
           <p className="truncate text-sm font-medium">{manifest.subject_id}</p>
@@ -75,12 +76,16 @@ export function ViewerShell() {
             pipeline {manifest.pipeline_version}
           </p>
         </div>
-        <StructureList names={names} />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <StructureList names={names} />
+          <div className="border-t border-surface-border">
+            <Controls structureNames={names} />
+          </div>
+        </div>
       </aside>
 
       {/* main area: 3D + slices */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
-        {/* 3D viewer */}
         <main className="relative min-h-[40vh] flex-1 lg:min-h-0">
           {meshes.length === 0 ? (
             <div className="flex h-full items-center justify-center text-accent-muted">
@@ -91,7 +96,6 @@ export function ViewerShell() {
           )}
         </main>
 
-        {/* synchronized slices */}
         <section className="h-[45vh] shrink-0 border-t border-surface-border lg:h-auto lg:w-72 lg:border-l lg:border-t-0">
           <SlicePanel manifest={manifest} />
         </section>

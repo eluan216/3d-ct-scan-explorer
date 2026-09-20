@@ -3,6 +3,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useViewerStore } from '@/store/viewer';
 import { VolumeData } from '@/lib/volume';
+import { pointerToCanvasPixel } from '@/lib/coords';
 
 interface Props {
   plane: 'axial' | 'coronal' | 'sagittal';
@@ -20,7 +21,6 @@ export function SliceView({ plane, volume, label }: Props) {
   const sliceIndex =
     plane === 'axial' ? crosshair.k : plane === 'coronal' ? crosshair.j : crosshair.i;
 
-  // draw slice + crosshair
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -29,7 +29,6 @@ export function SliceView({ plane, volume, label }: Props) {
 
     const { pixels, width, height } = volume.extractDisplaySlice(plane, sliceIndex);
 
-    // resize canvas to match slice (CSS will scale it)
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
@@ -46,7 +45,6 @@ export function SliceView({ plane, volume, label }: Props) {
     }
     ctx.putImageData(img, 0, 0);
 
-    // crosshair in display coordinates
     const [ni, nj, nk] = volume.shape;
     let cx: number;
     let cy: number;
@@ -70,7 +68,6 @@ export function SliceView({ plane, volume, label }: Props) {
     ctx.lineTo(width, cy + 0.5);
     ctx.stroke();
 
-    // small centre circle
     ctx.beginPath();
     ctx.arc(cx + 0.5, cy + 0.5, 3, 0, Math.PI * 2);
     ctx.stroke();
@@ -81,11 +78,15 @@ export function SliceView({ plane, volume, label }: Props) {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const a = (e.clientX - rect.left) * scaleX;
-      const b = (e.clientY - rect.top) * scaleY;
-      setCrosshairFromPlane(plane, a, b);
+      const mapped = pointerToCanvasPixel(
+        e.clientX,
+        e.clientY,
+        rect,
+        canvas.width,
+        canvas.height,
+      );
+      if (!mapped) return;
+      setCrosshairFromPlane(plane, mapped.a, mapped.b);
     },
     [plane, setCrosshairFromPlane],
   );

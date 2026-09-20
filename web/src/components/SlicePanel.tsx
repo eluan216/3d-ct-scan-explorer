@@ -25,7 +25,12 @@ export function SlicePanel({ manifest }: Props) {
         const vol = await loadVolume(binUrl, meta);
         if (cancelled) return;
         setVolume(vol);
-        setVolumeMeta(vol.shape, vol.spacing);
+        setVolumeMeta(
+          vol.shape,
+          vol.spacing,
+          meta.window_level ?? 50,
+          meta.window_width ?? 400,
+        );
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Failed to load volume');
