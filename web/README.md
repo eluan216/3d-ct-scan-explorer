@@ -7,38 +7,39 @@ Next.js frontend that consumes the pipeline asset contract.
 - Next.js 14 (App Router) + TypeScript
 - Tailwind CSS
 - React Three Fiber + Drei
-- Zustand for viewer state
+- Zustand for shared viewer state
 
-## First Milestone
+## Milestones
 
-- Load `manifest.json`
-- Display available structures
-- Load and render GLB meshes
-- Orbit / pan / zoom
-- Visibility toggles + selection highlight
-- Anatomical orientation indicator
-- Loading and error states
+### 1 – 3D meshes (done)
+- Load manifest + GLBs
+- Orbit controls, visibility, selection
+- Orientation indicator
 
-Synchronized slice views and window/level controls come next.
+### 2 – Synchronized slices (done)
+- Axial / Coronal / Sagittal panels
+- Shared crosshair state (i, j, k) derived from volume metadata
+- Click/drag in any plane updates the other two
+- Display orientation follows radiology convention (patient left on image right for axial/coronal)
+- Bounds taken from actual volume shape – nothing hardcoded
+
+### Next
+- Window/level and opacity controls
+- Slice position sliders
+- Study metadata panel
 
 ## Development
 
 ```bash
-# from repo root, after running the pipeline once
+# from repo root, after pipeline has written assets/
 cd web
 npm install
 npm run dev
 ```
 
-The app expects an `assets/` directory (produced by the pipeline) sitting next to `web/`.
-A small API route serves those files during local development.
+The app serves `../assets` via a small API route during local development.
 
 ## Contract
 
-This application only reads:
-
-- `manifest.json`
-- the volume / mesh / slice files referenced by the manifest
-
-It never inspects DICOM or NIfTI source data.
+Only reads `manifest.json` and the files it references.  
 See `../pipeline/docs/CONTRACT.md`.
