@@ -1,22 +1,19 @@
 # 3D CT Scan Explorer
 
-Interactive 3D CT anatomy explorer with synchronized multi-planar views.
+Interactive 3D CT anatomy viewer with synced multi-planar views.
 
-> **Learning tool only** — Not a medical device. Not for diagnosis.
-
-## Status
-Private development repository.
+**Important:** This is a learning project only. It is not a medical device and must not be used for diagnosis.
 
 ## Documentation
-- [Product Requirements Document (PRD)](./PRD.md)
+See [PRD.md](./PRD.md) for full requirements.
 
-## Planned Stack
-- Python pipeline (nibabel, scikit-image, trimesh)
-- Next.js + React Three Fiber + Zustand
-- TotalSegmentator public CT data (properly attributed)
+## Stack (planned)
+- Python mesh pipeline
+- Next.js + React Three Fiber
+- TotalSegmentator public data (attributed)
 
-## Getting Started
-Coming soon.
+## Status
+Private development.
 
 ---
-Built and maintained by [eluan216](https://github.com/eluan216)
+eluan216

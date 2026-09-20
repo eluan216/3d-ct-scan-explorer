@@ -1,46 +1,36 @@
-# Product Requirements Document (PRD)
+# Product Requirements Document
 
 **Project:** 3D CT Scan Explorer  
 **Owner:** eluan216  
-**Status:** In Development  
-**Last Updated:** 2026-09-20
+**Updated:** 2026-09-20
 
-## 1. Overview
-Build an interactive web-based 3D CT anatomy explorer that allows medical students and learners to visualize abdominal organs from real clinical CT scans. The application will provide synchronized axial, coronal, and sagittal views alongside a 3D mesh representation.
+## Purpose
+Build a web tool that turns a real clinical CT scan into interactive 3D organ models with synchronized axial, coronal, and sagittal views. The goal is a solid learning and portfolio piece for medical imaging and 3D visualization work.
 
-## 2. Goals
-- Create a learning-focused tool (explicitly **not** a medical device).
-- Demonstrate strong skills in medical imaging pipelines, 3D web visualization, and full-stack development.
-- Produce a clean, well-documented portfolio piece with clear architecture and verification steps.
+## Core Requirements
+- Generate 3D meshes from segmentation masks
+- Keep axial, coronal, and sagittal views locked to the same crosshair
+- Click an organ in 3D or in the list and jump every view to that location
+- Support organ visibility toggles
+- Work on both desktop and mobile
+- Use a dark theme suitable for radiology review
 
-## 3. Key Features
-- Interactive 3D organ meshes generated from segmentation masks.
-- Synchronized multi-planar reformatted (MPR) views (axial / coronal / sagittal).
-- Click-to-select organ functionality that updates crosshair position across all views.
-- Organ visibility toggles and opacity controls.
-- Responsive design (desktop + mobile).
-- Dark radiology-inspired theme.
+## Out of Scope
+- Any clinical decision support or diagnosis use
+- Processing brand-new patient scans in real time
+- Regulatory clearance
 
-## 4. Non-Goals
-- Clinical diagnosis or decision support.
-- Real-time processing of new patient scans.
-- Regulatory compliance (FDA, CE, etc.).
+## Technical Choices
+- Python pipeline for mesh creation (nibabel, scikit-image, trimesh)
+- Next.js + React Three Fiber + Zustand for the frontend
+- Public TotalSegmentator CT data with full attribution
+- Keep final web assets under ~20 MB
 
-## 5. Technical Requirements
-- **Backend / Pipeline:** Python (nibabel, scikit-image, trimesh) for mesh generation and asset preparation.
-- **Frontend:** Next.js (App Router) + React Three Fiber + Zustand.
-- **Data:** Publicly available TotalSegmentator CT subset (CC BY 4.0) with proper attribution.
-- Assets must remain under reasonable size for web delivery (~20 MB target).
+## Acceptance Criteria
+- Anatomical orientation is correct (liver on patient right, etc.)
+- All views stay perfectly synchronized
+- Clean build that can be deployed
+- Clear README explaining architecture and verification steps
 
-## 6. Success Metrics
-- Correct anatomical orientation (liver on patient's right, etc.).
-- All views stay perfectly synchronized.
-- Clean build and deployable on Vercel or similar.
-- Comprehensive README + architecture documentation.
-
-## 7. Originality Note
-This project is independently designed and implemented. Inspiration may come from publicly shared educational resources, but all architecture decisions, code structure, verification methods, and documentation are original work by the repository owner.
-
-## 8. License & Attribution
-- Code: MIT (or as specified)
-- Data: TotalSegmentator dataset (Wasserthal et al.), University Hospital Basel, CC BY 4.0
+## Notes on Ownership
+This repository and all design decisions, code structure, verification methods, and documentation are original work by the owner. Public educational resources may have provided high-level inspiration, but the implementation is independent.
