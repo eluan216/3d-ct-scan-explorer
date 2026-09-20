@@ -1,71 +1,79 @@
 """
-Detailed validation of a DICOM series before conversion to volume.
+Detailed validation of a DICOM series with ERROR / WARNING / INFO severity.
 """
 
-from typing import List, Tuple, Any
+from typing import List, Any
 import numpy as np
+from models.report import Report, Severity
 
 
-def check_missing_instance_numbers(datasets: List[Any]) -> Tuple[bool, str]:
+def validate_series(datasets: List[Any]) -> Report:
+    report = Report()
+
+    if not datasets:
+        report.error("EMPTY_SERIES", "no datasets provided")
+        return report
+
+    # --- InstanceNumber continuity (WARNING if gaps) ---
     numbers = []
     for ds in datasets:
         n = getattr(ds, "InstanceNumber", None)
         if n is not None:
-            numbers.append(int(n))
-    if not numbers:
-        return True, "no InstanceNumber attributes (skipped)"
-    numbers = sorted(set(numbers))
-    expected = list(range(numbers[0], numbers[-1] + 1))
-    missing = sorted(set(expected) - set(numbers))
-    if missing:
-        return False, f"missing InstanceNumbers: {missing[:10]}{'…' if len(missing) > 10 else ''}"
-    return True, "InstanceNumbers contiguous"
+            try:
+                numbers.append(int(n))
+            except (TypeError, ValueError):
+                pass
+    if numbers:
+        numbers_sorted = sorted(set(numbers))
+        expected = list(range(numbers_sorted[0], numbers_sorted[-1] + 1))
+        missing = sorted(set(expected) - set(numbers_sorted))
+        if missing:
+            report.warning(
+                "NON_CONTIGUOUS_INSTANCE",
+                f"InstanceNumber gaps: {missing[:8]}{'…' if len(missing) > 8 else ''}",
+            )
+        else:
+            report.info("INSTANCE_OK", "InstanceNumbers contiguous")
+    else:
+        report.info("INSTANCE_ABSENT", "no InstanceNumber attributes present")
 
-
-def check_duplicate_positions(datasets: List[Any]) -> Tuple[bool, str]:
+    # --- Duplicate positions (ERROR) ---
     positions = []
     for ds in datasets:
         ipp = getattr(ds, "ImagePositionPatient", None)
-        if ipp is not None:
-            positions.append(tuple(float(x) for x in ipp))
-    if len(positions) < 2:
-        return True, "insufficient position data"
-    unique = set(positions)
-    if len(unique) < len(positions):
-        return False, f"duplicate ImagePositionPatient values detected ({len(positions) - len(unique)} duplicates)"
-    return True, "no duplicate positions"
+        if ipp is not None and len(ipp) >= 3:
+            positions.append(tuple(float(x) for x in ipp[:3]))
+    if positions:
+        if len(set(positions)) < len(positions):
+            report.error(
+                "DUPLICATE_POSITION",
+                f"duplicate ImagePositionPatient values ({len(positions) - len(set(positions))} duplicates)",
+            )
+        else:
+            report.info("POSITION_UNIQUE", "no duplicate positions")
+    else:
+        report.warning("POSITION_MISSING", "ImagePositionPatient not available")
 
+    # --- Slice spacing consistency (WARNING if variation high) ---
+    if len(positions) >= 3:
+        pts = [np.array(p) for p in positions]
+        dists = [float(np.linalg.norm(pts[i+1] - pts[i])) for i in range(len(pts)-1)]
+        median = float(np.median(dists))
+        if median > 0:
+            outliers = [d for d in dists if abs(d - median) > 0.25 * median]
+            if outliers:
+                report.warning(
+                    "SPACING_VARIATION",
+                    f"slice spacing variation (median={median:.3f} mm, outliers={len(outliers)})",
+                )
+            else:
+                report.info("SPACING_OK", f"slice spacing consistent (≈{median:.3f} mm)")
 
-def check_slice_spacing_consistency(datasets: List[Any], tol: float = 0.2) -> Tuple[bool, str]:
-    positions = []
-    for ds in datasets:
-        ipp = getattr(ds, "ImagePositionPatient", None)
-        if ipp is not None:
-            positions.append(np.array([float(x) for x in ipp]))
-    if len(positions) < 3:
-        return True, "not enough slices to assess spacing"
+    # --- Required geometry for volume construction (ERROR if missing) ---
+    first = datasets[0]
+    if getattr(first, "PixelSpacing", None) is None:
+        report.error("PIXEL_SPACING_MISSING", "PixelSpacing required to build volume")
+    if getattr(first, "Rows", None) is None or getattr(first, "Columns", None) is None:
+        report.error("ROWS_COLS_MISSING", "Rows/Columns required")
 
-    dists = [np.linalg.norm(positions[i+1] - positions[i]) for i in range(len(positions)-1)]
-    median = float(np.median(dists))
-    outliers = [d for d in dists if abs(d - median) > tol * median]
-    if outliers:
-        return False, f"inconsistent slice spacing (median={median:.3f}, outliers={len(outliers)})"
-    return True, f"slice spacing consistent (≈{median:.3f} mm)"
-
-
-def validate_series(datasets: List[Any]) -> Tuple[bool, List[str]]:
-    messages = []
-    ok = True
-
-    checks = [
-        check_missing_instance_numbers,
-        check_duplicate_positions,
-        check_slice_spacing_consistency,
-    ]
-    for fn in checks:
-        passed, msg = fn(datasets)
-        messages.append(("OK  " if passed else "FAIL") + "  " + msg)
-        if not passed:
-            ok = False
-
-    return ok, messages
+    return report
