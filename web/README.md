@@ -9,27 +9,13 @@ Next.js frontend that consumes the pipeline asset contract.
 - React Three Fiber + Drei
 - Zustand for shared viewer state
 
-## Milestones
+## Features
 
-### 1 – 3D meshes
-- Load manifest + GLBs
-- Orbit controls, visibility, selection
-- Orientation indicator
-
-### 2 – Synchronized slices
-- Axial / Coronal / Sagittal panels
-- Shared crosshair (i, j, k) from volume metadata
-- Click/drag updates all views
-- Radiology display orientation
-- Bounds from actual volume shape
-- Click mapping corrected for object-contain letterboxing
-
-### 3 – Controls
-- Slice position sliders (i / j / k)
-- Mesh opacity
-- Structure visibility (existing)
-- Window level / width state (from metadata; display volume is pre-windowed)
-- Reset all
+1. **3D meshes** – GLB load, orbit, visibility, selection, orientation indicator
+2. **Synchronized slices** – axial / coronal / sagittal + shared crosshair
+3. **Controls** – slice sliders, opacity, window state, reset
+4. **Study metadata** – dimensions, spacing, orientation, structures, pipeline version (no PHI)
+5. **Robustness** – WebGL detection, mesh error boundary, missing-asset handling, mobile layout
 
 ## Development
 

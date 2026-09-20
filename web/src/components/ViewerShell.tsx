@@ -1,15 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { loadManifest, meshUrl, listStructures, AssetError } from '@/lib/assets';
-import { Manifest } from '@/types/manifest';
+import {
+  loadManifest,
+  loadVolumeMetadata,
+  meshUrl,
+  listStructures,
+  AssetError,
+} from '@/lib/assets';
+import { Manifest, VolumeMetadata } from '@/types/manifest';
 import { MeshViewer } from './MeshViewer';
 import { StructureList } from './StructureList';
 import { SlicePanel } from './SlicePanel';
 import { Controls } from './Controls';
+import { MetadataPanel } from './MetadataPanel';
+import { WebGLFallback } from './WebGLFallback';
 
 export function ViewerShell() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [volumeMeta, setVolumeMeta] = useState<VolumeMetadata | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,10 +27,17 @@ export function ViewerShell() {
     (async () => {
       try {
         const m = await loadManifest();
-        if (!cancelled) {
-          setManifest(m);
-          setLoading(false);
+        if (cancelled) return;
+        setManifest(m);
+
+        try {
+          const meta = await loadVolumeMetadata(m);
+          if (!cancelled) setVolumeMeta(meta);
+        } catch {
+          // volume metadata is optional for the 3D-only path
         }
+
+        if (!cancelled) setLoading(false);
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof AssetError ? e.message : 'Failed to load assets');
@@ -50,8 +66,8 @@ export function ViewerShell() {
           {error ?? 'Unknown error'}
         </p>
         <p className="mt-4 text-xs text-accent-muted">
-          Place a generated <code className="text-accent">assets/</code> folder
-          (with manifest.json) where the app can serve it, then refresh.
+          Ensure a valid <code className="text-accent">assets/</code> folder with
+          <code className="text-accent"> manifest.json</code> is available, then refresh.
         </p>
       </div>
     );
@@ -67,8 +83,8 @@ export function ViewerShell() {
 
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
-      {/* sidebar */}
-      <aside className="flex w-full shrink-0 flex-col border-b border-surface-border md:w-56 md:border-b-0 md:border-r">
+      {/* sidebar – stacks on mobile */}
+      <aside className="flex max-h-[40vh] w-full shrink-0 flex-col overflow-y-auto border-b border-surface-border md:max-h-none md:w-56 md:border-b-0 md:border-r">
         <div className="border-b border-surface-border px-3 py-2">
           <p className="text-xs text-accent-muted">Subject</p>
           <p className="truncate text-sm font-medium">{manifest.subject_id}</p>
@@ -76,27 +92,33 @@ export function ViewerShell() {
             pipeline {manifest.pipeline_version}
           </p>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <StructureList names={names} />
-          <div className="border-t border-surface-border">
-            <Controls structureNames={names} />
-          </div>
+
+        <StructureList names={names} />
+
+        <div className="border-t border-surface-border">
+          <Controls structureNames={names} />
+        </div>
+
+        <div className="border-t border-surface-border">
+          <MetadataPanel manifest={manifest} volumeMeta={volumeMeta} />
         </div>
       </aside>
 
-      {/* main area: 3D + slices */}
+      {/* main: 3D + slices */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
-        <main className="relative min-h-[40vh] flex-1 lg:min-h-0">
-          {meshes.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-accent-muted">
-              No meshes listed in the manifest
-            </div>
-          ) : (
-            <MeshViewer meshes={meshes} />
-          )}
+        <main className="relative min-h-[36vh] flex-1 lg:min-h-0">
+          <WebGLFallback>
+            {meshes.length === 0 ? (
+              <div className="flex h-full items-center justify-center p-4 text-center text-sm text-accent-muted">
+                No meshes listed in the manifest
+              </div>
+            ) : (
+              <MeshViewer meshes={meshes} />
+            )}
+          </WebGLFallback>
         </main>
 
-        <section className="h-[45vh] shrink-0 border-t border-surface-border lg:h-auto lg:w-72 lg:border-l lg:border-t-0">
+        <section className="h-[42vh] shrink-0 border-t border-surface-border lg:h-auto lg:w-72 lg:border-l lg:border-t-0">
           <SlicePanel manifest={manifest} />
         </section>
       </div>
