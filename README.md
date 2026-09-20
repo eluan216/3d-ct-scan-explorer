@@ -1,39 +1,73 @@
 # 3D CT Scan Explorer
 
-Interactive viewer for abdominal CT scans. Generates 3D organ meshes from segmentation masks and keeps axial, coronal, and sagittal views synchronized to a single crosshair.
+Interactive viewer for abdominal CT scans. The project generates 3D organ meshes and keeps axial, coronal and sagittal views synchronized.
 
-**This is a learning and portfolio project only. It is not a medical device and must never be used for diagnosis.**
+This is a learning and portfolio project only. It is not a medical device and must never be used for diagnosis.
+
+## Current Focus
+
+The pipeline is being built first, before any frontend work.
+
+Goals for the pipeline:
+
+- Full CT lifecycle (discovery → validation → orientation → preprocessing → mesh generation → quality checks → frontend-ready assets)
+- Configuration-driven and reproducible
+- Explicit failure handling
+- Clear separation of concerns
+- Stable asset contract that the frontend will consume later
 
 ## Project Structure
 
 ```
 3d-ct-scan-explorer/
-├── pipeline/           # Python scripts that prepare meshes and volume data
-├── web/                # Next.js frontend
-├── data/               # Local data (not committed)
-├── docs/               # Additional notes
+├── pipeline/               # Modular processing pipeline (active development)
+│   ├── cli.py
+│   ├── config.py
+│   ├── dicom/
+│   ├── preprocessing/
+│   ├── segmentation/
+│   ├── mesh/
+│   ├── slices/
+│   ├── validation/
+│   ├── models/
+│   └── tests/
+├── web/                    # Frontend (not started yet)
+├── docs/
 ├── PRD.md
 └── README.md
 ```
 
-## High-Level Flow
+## Asset Contract (target)
 
-1. Download a public CT + segmentation dataset.
-2. Run the pipeline to pick a suitable subject, reorient, crop, window, and export meshes + volume binaries.
-3. Serve the frontend. The web app loads the prepared assets and renders the 3D + MPR views.
+```
+assets/
+├── volume/
+│   ├── volume.bin
+│   └── metadata.json
+├── meshes/
+│   └── <structure>.glb
+├── slices/
+└── manifest.json
+```
 
 ## Status
 
-- [x] Repository and PRD
-- [ ] Pipeline scripts
-- [ ] Frontend application
-- [ ] Verification steps
-- [ ] Deployment notes
+- [x] Repository + PRD
+- [x] Modular pipeline skeleton
+- [x] Configuration system
+- [x] CLI entry point
+- [x] Discovery & basic validation
+- [x] Orientation helpers
+- [ ] Full preprocessing modules
+- [ ] Mesh generation + cleanup
+- [ ] End-to-end run wiring
+- [ ] Automated verification suite
+- [ ] Frontend (after pipeline is stable)
 
-## License & Attribution
+## License & Data
 
-Code will be released under MIT once the first working version is complete.  
-CT data comes from the TotalSegmentator dataset (Wasserthal et al., University Hospital Basel) under CC BY 4.0. Full attribution will appear in the application footer and this README.
+Code will be MIT once the first complete version is ready.  
+CT data will use the public TotalSegmentator dataset (CC BY 4.0) with full attribution.
 
 ---
 eluan216
