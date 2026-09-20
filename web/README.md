@@ -1,17 +1,44 @@
 # Web Application
 
-Next.js frontend that renders the 3D meshes and the three orthogonal slice views.
+Next.js frontend that consumes the pipeline asset contract.
 
-## Planned Stack
+## Stack
 
-- Next.js (App Router)
+- Next.js 14 (App Router) + TypeScript
+- Tailwind CSS
 - React Three Fiber + Drei
-- Zustand for shared state (crosshair position, selected organ, visibility)
-- Canvas-based 2D slice rendering
+- Zustand for viewer state
 
-## Layout Target
+## First Milestone
 
-Desktop: organ list on the left + 2×2 grid (3D, axial, coronal, sagittal).  
-Mobile: horizontal organ chips + stacked panels.
+- Load `manifest.json`
+- Display available structures
+- Load and render GLB meshes
+- Orbit / pan / zoom
+- Visibility toggles + selection highlight
+- Anatomical orientation indicator
+- Loading and error states
 
-Detailed component structure and state design will be added as the frontend is built.
+Synchronized slice views and window/level controls come next.
+
+## Development
+
+```bash
+# from repo root, after running the pipeline once
+cd web
+npm install
+npm run dev
+```
+
+The app expects an `assets/` directory (produced by the pipeline) sitting next to `web/`.
+A small API route serves those files during local development.
+
+## Contract
+
+This application only reads:
+
+- `manifest.json`
+- the volume / mesh / slice files referenced by the manifest
+
+It never inspects DICOM or NIfTI source data.
+See `../pipeline/docs/CONTRACT.md`.
