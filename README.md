@@ -1,43 +1,50 @@
 # 3D CT Scan Explorer
 
-Interactive viewer for abdominal CT scans. The project generates 3D organ meshes and keeps axial, coronal and sagittal views synchronized.
+Interactive viewer for abdominal CT scans. The project turns a CT study into 3D organ meshes and synchronized multi-planar views.
 
 This is a learning and portfolio project only. It is not a medical device and must never be used for diagnosis.
 
 ## Current Focus
 
-The pipeline is being built first, before any frontend work.
+The processing pipeline is being completed first. The frontend will be built only after the pipeline produces a stable, verifiable asset package.
 
-Goals for the pipeline:
+## Pipeline Status
 
-- Full CT lifecycle (discovery → validation → orientation → preprocessing → mesh generation → quality checks → frontend-ready assets)
-- Configuration-driven and reproducible
-- Explicit failure handling
-- Clear separation of concerns
-- Stable asset contract that the frontend will consume later
+| Stage                    | Status      |
+|--------------------------|-------------|
+| Config system            | Done        |
+| CLI (explicit stages)    | Done        |
+| Discovery / validation   | Done        |
+| Orientation              | Done        |
+| Window / crop            | Done        |
+| Segmentation interface   | Done        |
+| Mesh generation + export | Done        |
+| End-to-end `build`       | Done        |
+| Asset verification       | Done        |
+| Full DICOM support       | Pending     |
+| Comprehensive tests      | In progress |
+| Frontend                 | Not started |
 
-## Project Structure
+## Quick Start (once data is present)
 
+```bash
+cd pipeline
+pip install -r requirements.txt
+
+# discover subjects
+python -m pipeline.cli discover ../data/raw
+
+# validate one subject
+python -m pipeline.cli validate ../data/raw/<subject>
+
+# run full pipeline
+python -m pipeline.cli build ../data/raw/<subject> --output ../assets
+
+# verify the output
+python -m pipeline.cli verify ../assets
 ```
-3d-ct-scan-explorer/
-├── pipeline/               # Modular processing pipeline (active development)
-│   ├── cli.py
-│   ├── config.py
-│   ├── dicom/
-│   ├── preprocessing/
-│   ├── segmentation/
-│   ├── mesh/
-│   ├── slices/
-│   ├── validation/
-│   ├── models/
-│   └── tests/
-├── web/                    # Frontend (not started yet)
-├── docs/
-├── PRD.md
-└── README.md
-```
 
-## Asset Contract (target)
+## Asset Contract
 
 ```
 assets/
@@ -46,27 +53,26 @@ assets/
 │   └── metadata.json
 ├── meshes/
 │   └── <structure>.glb
-├── slices/
-└── manifest.json
+├── manifest.json
+└── pipeline_config.json
 ```
 
-## Status
+The frontend will only need to read `manifest.json` and the files it references.
 
-- [x] Repository + PRD
-- [x] Modular pipeline skeleton
-- [x] Configuration system
-- [x] CLI entry point
-- [x] Discovery & basic validation
-- [x] Orientation helpers
-- [ ] Full preprocessing modules
-- [ ] Mesh generation + cleanup
-- [ ] End-to-end run wiring
-- [ ] Automated verification suite
-- [ ] Frontend (after pipeline is stable)
+## Project Layout
+
+```
+3d-ct-scan-explorer/
+├── pipeline/          # active development
+├── web/               # not started
+├── docs/
+├── PRD.md
+└── README.md
+```
 
 ## License & Data
 
-Code will be MIT once the first complete version is ready.  
+Code will be MIT.  
 CT data will use the public TotalSegmentator dataset (CC BY 4.0) with full attribution.
 
 ---
