@@ -5,6 +5,7 @@ import { loadManifest, meshUrl, listStructures, AssetError } from '@/lib/assets'
 import { Manifest } from '@/types/manifest';
 import { MeshViewer } from './MeshViewer';
 import { StructureList } from './StructureList';
+import { SlicePanel } from './SlicePanel';
 
 export function ViewerShell() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
@@ -64,9 +65,9 @@ export function ViewerShell() {
     .filter(Boolean) as { name: string; url: string }[];
 
   return (
-    <div className="flex h-full flex-col md:flex-row">
+    <div className="flex h-full min-h-0 flex-col md:flex-row">
       {/* sidebar */}
-      <aside className="w-full shrink-0 border-b border-surface-border md:w-56 md:border-b-0 md:border-r">
+      <aside className="w-full shrink-0 border-b border-surface-border md:w-52 md:border-b-0 md:border-r">
         <div className="border-b border-surface-border px-3 py-2">
           <p className="text-xs text-accent-muted">Subject</p>
           <p className="truncate text-sm font-medium">{manifest.subject_id}</p>
@@ -77,16 +78,24 @@ export function ViewerShell() {
         <StructureList names={names} />
       </aside>
 
-      {/* main viewer */}
-      <main className="min-h-0 flex-1">
-        {meshes.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-accent-muted">
-            No meshes listed in the manifest
-          </div>
-        ) : (
-          <MeshViewer meshes={meshes} />
-        )}
-      </main>
+      {/* main area: 3D + slices */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
+        {/* 3D viewer */}
+        <main className="relative min-h-[40vh] flex-1 lg:min-h-0">
+          {meshes.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-accent-muted">
+              No meshes listed in the manifest
+            </div>
+          ) : (
+            <MeshViewer meshes={meshes} />
+          )}
+        </main>
+
+        {/* synchronized slices */}
+        <section className="h-[45vh] shrink-0 border-t border-surface-border lg:h-auto lg:w-72 lg:border-l lg:border-t-0">
+          <SlicePanel manifest={manifest} />
+        </section>
+      </div>
     </div>
   );
 }
