@@ -3,3 +3,5 @@ numpy>=1.26.0
 scikit-image>=0.22.0
 trimesh>=4.0.0
 Pillow>=10.0.0
+# pydicom>=2.4.0          # enable when full DICOM support is added
+# SimpleITK>=2.3.0        # optional for advanced resampling

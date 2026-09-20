@@ -1,19 +1,56 @@
 # Pipeline
 
-Python scripts that convert a TotalSegmentator CT subject into web-ready assets.
+Modular processing pipeline for the 3D CT Scan Explorer.
 
-## Planned Scripts
+## Design Goals
 
-- `pick_subject.py` — select a subject that has the required organs fully inside the volume
-- `build_assets.py` — reorient, crop, window the CT, create label volume, generate meshes, export binaries and metadata
+- Full lifecycle coverage (discovery → validation → orientation → preprocessing → mesh → assets)
+- Configuration-driven and reproducible
+- Clear separation of concerns
+- Failures are explicit rather than silent
+- Predictable asset contract for the frontend
 
-## Requirements (planned)
+## Directory Layout
 
-- Python 3.10+
-- nibabel
-- numpy
-- scikit-image
-- trimesh
-- fast-simplification (optional, for mesh decimation)
+```
+pipeline/
+├── cli.py
+├── config.py
+├── dicom/
+├── preprocessing/
+├── segmentation/
+├── mesh/
+├── slices/
+├── validation/
+├── models/
+├── tests/
+└── requirements.txt
+```
 
-Exact dependency list and environment setup will be added once the scripts are written.
+## Asset Contract
+
+The pipeline produces:
+
+```
+assets/
+├── volume/
+│   ├── volume.bin
+│   └── metadata.json
+├── meshes/
+│   └── <label>.glb
+├── slices/          # optional pre-rendered slices
+└── manifest.json
+```
+
+The frontend only needs to read `manifest.json` and the referenced files.
+
+## Current Status
+
+- Configuration system
+- CLI skeleton
+- DICOM/NIfTI discovery and basic validation
+- Orientation helpers
+- Volume and asset validation stubs
+- Metadata models
+
+Full end-to-end run wiring and mesh generation modules are next.
