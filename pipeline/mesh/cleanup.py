@@ -17,8 +17,8 @@ def remove_small_components(mesh: trimesh.Trimesh, min_faces: int = 50) -> trime
 
 def basic_cleanup(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
     """Remove degenerate faces and fix normals."""
-    mesh.remove_degenerate_faces()
-    mesh.remove_duplicate_faces()
+    mesh.update_faces(mesh.nondegenerate_faces())
+    mesh.update_faces(mesh.unique_faces())
     mesh.remove_unreferenced_vertices()
     mesh.fix_normals()
     return mesh
