@@ -1,90 +1,68 @@
 # 3D CT Scan Explorer
 
-Interactive viewer for abdominal CT scans. The project turns a CT study into 3D organ meshes and synchronized multi-planar views.
+Interactive viewer for abdominal CT scans. Turns a CT study into 3D organ meshes and synchronized multi-planar views.
 
-This is a learning and portfolio project only. It is not a medical device and must never be used for diagnosis.
+**Learning / portfolio project only. Not a medical device. Not for diagnosis.**
 
 ## Architecture
 
 ```
-DICOM directory ──► DicomSeriesLoader ──┐
-                                        ▼
-NIfTI subject   ──► NiftiLoader ────────► CanonicalVolume
-                                        ▼
-                               Preprocessing → Segmentation → Mesh
-                                        ▼
-                                   assets/ + manifest.json
-                                        ▼
-                                     verify
+DICOM ──┐
+        ▼
+NIfTI ──► CanonicalVolume → Pipeline → assets/ + manifest.json → Next.js viewer
 ```
 
-Input adapters are interchangeable. Downstream stages only see `CanonicalVolume`.
+The frontend is a pure consumer of the frozen asset contract.
 
-## Pipeline Status
+## Status
 
-| Area                                 | Status |
-|--------------------------------------|--------|
-| CanonicalVolume + invariants         | Done   |
-| DICOM adapter (orientation, series)  | Done   |
-| Reversed-order slice handling        | Done   |
-| Multi-series selection rules         | Done   |
-| Severity levels (ERROR/WARNING/INFO) | Done   |
-| Geometry & segmentation edge cases   | Done   |
-| Golden fixture regression            | Done   |
-| Frozen contract documentation        | Done   |
-| Frontend                             | Not started |
+### Pipeline
+| Area | Status |
+|------|--------|
+| CanonicalVolume + adapters (DICOM / NIfTI) | Done |
+| Orientation, series selection, severity levels | Done |
+| Mesh generation + verification | Done |
+| Golden fixture + failure-focused tests | Done |
+| Frozen contract (`pipeline/docs/CONTRACT.md`) | Done |
+
+### Frontend (first milestone)
+| Area | Status |
+|------|--------|
+| Next.js + TypeScript + Tailwind foundation | Done |
+| Typed manifest + asset loader | Done |
+| 3D GLB viewer (R3F) | Done |
+| Structure list, visibility, selection | Done |
+| Orientation indicator | Done |
+| Loading / error states | Done |
+| Synchronized slice views | Next |
+| Window/level + volume controls | Next |
+
+## Quick Start
+
+```bash
+# 1. Pipeline (once you have a subject)
+cd pipeline
+pip install -r requirements.txt
+python -m pipeline.cli build /path/to/subject --output ../assets
+python -m pipeline.cli verify ../assets
+
+# 2. Frontend
+cd ../web
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. The app serves files from the sibling `assets/` directory.
 
 ## Contract
 
-See [`pipeline/docs/CONTRACT.md`](pipeline/docs/CONTRACT.md) for the stable interfaces. Frontend work must consume only the published asset manifest and must not change pipeline contracts without a version bump.
-
-## CLI
-
-```bash
-cd pipeline
-pip install -r requirements.txt
-
-python -m pipeline.cli discover <root>
-python -m pipeline.cli validate <study>
-python -m pipeline.cli build <study> --output ../assets
-python -m pipeline.cli verify ../assets
-```
-
-## Tests
-
-```bash
-cd pipeline
-pip install pytest
-pytest tests/ -v
-```
-
-Coverage includes:
-
-- oblique / missing / inconsistent orientation
-- reversed slice ordering
-- multiple CT series selection & ties
-- single-slice and spacing-variation geometry
-- empty / single-voxel / disconnected segmentation
-- golden end-to-end fixture → verified assets
-- both DICOM-style synthetic data and NIfTI paths
-
-## Asset Package
-
-```
-assets/
-├── volume/
-│   ├── volume.bin
-│   └── metadata.json
-├── meshes/
-│   └── <structure>.glb
-├── manifest.json
-└── pipeline_config.json
-```
+See [`pipeline/docs/CONTRACT.md`](pipeline/docs/CONTRACT.md).  
+Frontend requirements must not modify pipeline interfaces without a version bump.
 
 ## License & Data
 
 Code will be MIT.  
-Public datasets will be fully attributed (e.g. TotalSegmentator, CC BY 4.0).
+Public datasets (e.g. TotalSegmentator) will be fully attributed under their respective licenses.
 
 ---
 eluan216
