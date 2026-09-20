@@ -1,5 +1,7 @@
 """
 Command-line entry point for the CT processing pipeline.
+
+Explicit stages are exposed so each step can be run and inspected independently.
 """
 
 import argparse
@@ -15,23 +17,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    # discover
-    p_disc = sub.add_parser("discover", help="Discover DICOM series or NIfTI subjects")
-    p_disc.add_argument("input", type=Path, help="Root directory to scan")
+    # discovery / validation
+    p = sub.add_parser("discover", help="Discover subjects under a root directory")
+    p.add_argument("input", type=Path)
 
-    # validate
-    p_val = sub.add_parser("validate", help="Validate a single study or subject")
-    p_val.add_argument("path", type=Path)
+    p = sub.add_parser("validate", help="Validate a single subject")
+    p.add_argument("path", type=Path)
 
-    # run
-    p_run = sub.add_parser("run", help="Run full pipeline on a subject")
-    p_run.add_argument("subject", type=Path, help="Subject directory")
-    p_run.add_argument("--config", type=Path, default=None)
-    p_run.add_argument("--output", type=Path, default=None)
+    # processing stages
+    p = sub.add_parser("preprocess", help="Run orientation + window + optional crop/resample")
+    p.add_argument("subject", type=Path)
+    p.add_argument("--config", type=Path, default=None)
+    p.add_argument("--output", type=Path, default=None)
 
-    # verify
-    p_ver = sub.add_parser("verify", help="Run quality checks on generated assets")
-    p_ver.add_argument("assets", type=Path, help="Path to assets directory")
+    p = sub.add_parser("segment", help="Run segmentation stage")
+    p.add_argument("subject", type=Path)
+    p.add_argument("--config", type=Path, default=None)
+
+    p = sub.add_parser("mesh", help="Generate meshes from label map")
+    p.add_argument("labels", type=Path)
+    p.add_argument("--config", type=Path, default=None)
+    p.add_argument("--output", type=Path, default=None)
+
+    p = sub.add_parser("slices", help="Generate axial/coronal/sagittal slice sets")
+    p.add_argument("volume", type=Path)
+    p.add_argument("--config", type=Path, default=None)
+    p.add_argument("--output", type=Path, default=None)
+
+    # full build + verify
+    p = sub.add_parser("build", help="Run complete pipeline and write assets/")
+    p.add_argument("subject", type=Path)
+    p.add_argument("--config", type=Path, default=None)
+    p.add_argument("--output", type=Path, default=None)
+
+    p = sub.add_parser("verify", help="Verify a generated assets directory")
+    p.add_argument("assets", type=Path)
 
     return parser
 
@@ -42,8 +62,7 @@ def main(argv=None):
 
     if args.command == "discover":
         from dicom.discover import discover
-        results = discover(args.input)
-        for r in results:
+        for r in discover(args.input):
             print(r)
         return 0
 
@@ -54,18 +73,32 @@ def main(argv=None):
             print(m)
         return 0 if ok else 1
 
-    if args.command == "run":
+    if args.command == "preprocess":
+        print("preprocess stage – implementation in progress")
+        return 0
+
+    if args.command == "segment":
+        print("segment stage – implementation in progress")
+        return 0
+
+    if args.command == "mesh":
+        print("mesh stage – implementation in progress")
+        return 0
+
+    if args.command == "slices":
+        print("slices stage – implementation in progress")
+        return 0
+
+    if args.command == "build":
         cfg = PipelineConfig()
         if args.config:
             cfg = PipelineConfig.load(args.config)
         if args.output:
             cfg.output_path = args.output
-
-        # Full run will be wired once modules are complete
-        print(f"Pipeline version {cfg.pipeline_version}")
-        print(f"Subject: {args.subject}")
-        print(f"Output:  {cfg.output_path}")
-        print("Full run not yet fully wired — modules under construction.")
+        print(f"build stage – pipeline version {cfg.pipeline_version}")
+        print(f"subject : {args.subject}")
+        print(f"output  : {cfg.output_path}")
+        print("full end-to-end wiring still under construction")
         return 0
 
     if args.command == "verify":
