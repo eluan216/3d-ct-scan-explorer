@@ -149,17 +149,16 @@ No patient-identifying information is shown in the UI.
 
 ## Demo
 
-End-to-end screen recording of the live viewer (~55s) covering:
+**[Watch the demo (≈52s)](https://drive.google.com/file/d/1j5YIkJg9D9K9xvKv-myd8AWwXLdpXm36/view?usp=drivesdk)**
+
+Screen recording of the live viewer on subject `s0011` (TotalSegmentator-style layout):
 
 - Orbit of multi-organ 3D meshes  
 - Structure visibility toggles  
 - Synchronized axial / coronal / sagittal crosshair  
 - Slice index sliders  
 
-Validated on subject `s0011` (TotalSegmentator-style layout).
-
-For README / LinkedIn embeds, a **20–40s** trim is ideal.  
-Place the final file under `docs/demo.mp4` or `docs/demo.gif` and link it here when uploaded.
+File size ≈ 21 MB. Ensure the Drive link is set to **Anyone with the link** if viewers outside your account need access.
 
 ---
 
